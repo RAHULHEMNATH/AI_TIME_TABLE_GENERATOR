@@ -1,41 +1,45 @@
-import os
-import logging
+from flask import Flask, render_template
 
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
-from werkzeug.middleware.proxy_fix import ProxyFix
-
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
-
-class Base(DeclarativeBase):
-    pass
-
-db = SQLAlchemy(model_class=Base)
-
-# Create the app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-# Configure the database
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///timetable.db")
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
+@app.route('/')
+def home():
+    return render_template('index.html')  # or whatever your main template is
 
-# Initialize the app with the extension
-db.init_app(app)
+# Add your other routes here
 
-with app.app_context():
-    # Import models to ensure tables are created
-    import models
-    db.create_all()
-
-# Import routes
-import routes
-
+# This is important for Vercel
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run()
+else:
+    # This makes the app compatible with Vercel's serverless functions
+    import sys
+    from io import StringIO
+    from flask import request
+    
+    # Create a simple WSGI adapter for Vercel
+    def vercel_handler(request):
+        from werkzeug.wrappers import Response
+        
+        # Capture stdout/stderr
+        old_stdout, old_stderr = sys.stdout, sys.stderr
+        captured_output, captured_errors = StringIO(), StringIO()
+        
+        try:
+            sys.stdout, sys.stderr = captured_output, captured_errors
+            
+            # Process the request through Flask
+            with app.request_context(request):
+                response = app.full_dispatch_request()
+                
+            # Return the response in Vercel's expected format
+            return {
+                'statusCode': response.status_code,
+                'headers': dict(response.headers),
+                'body': response.get_data().decode('utf-8')
+            }
+        finally:
+            sys.stdout, sys.stderr = old_stdout, old_stderr
+
+# This allows the app to work both locally and on Vercel
+app.vercel_handler = vercel_handler
