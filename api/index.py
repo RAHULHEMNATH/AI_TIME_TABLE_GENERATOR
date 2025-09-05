@@ -1,30 +1,30 @@
-from flask import Flask
+from flask import Flask, render_template
 import traceback
-import sys
-import os
 
-# Add the main project folder to Python's search path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Create Flask app
+app = Flask(__name__)
 
-# Try to import your REAL Flask app from app.py
+# Try to import your templates and routes
 try:
-    from app import app  # This imports your actual Flask app
-    print("SUCCESS: Your main app was imported!")
+    @app.route('/')
+    def home():
+        return render_template('index.html')
+    
+    print("SUCCESS: Basic routes added!")
     
 except Exception as e:
-    # If importing fails, create a simple app that shows the error
-    app = Flask(__name__)
     error_msg = traceback.format_exc()
+    print(f"ERROR: {error_msg}")
     
     @app.route('/')
     def show_error():
         return f"""
-        <h1>Error Importing Your App</h1>
-        <p>There is a problem in your <code>app.py</code> file:</p>
+        <h1>Template Error</h1>
+        <p>Could not load templates:</p>
         <pre style='background: #f0f0f0; padding: 10px;'>{error_msg}</pre>
         """, 500
 
-# This makes it work on Vercel
+# Vercel handler function
 def main(request):
     with app.test_request_context(path=request['path'], method=request['httpMethod']):
         response = app.full_dispatch_request()
