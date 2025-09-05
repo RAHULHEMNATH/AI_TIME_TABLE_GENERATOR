@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Timetable - AI Timetable Generator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-magic me-2"></i>Generate Timetable
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>Timetable Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('run_generation') }}">
+                    <div class="mb-3">
+                        <label for="department" class="form-label">Department *</label>
+                        <select class="form-select" id="department" name="department" required>
+                            <option value="">Select Department</option>
+                            {% for dept in departments %}
+                                <option value="{{ dept }}">{{ dept }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Choose the department for which to generate the timetable.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="semester" class="form-label">Semester *</label>
+                        <select class="form-select" id="semester" name="semester" required>
+                            <option value="">Select Semester</option>
+                            {% for sem in semesters %}
+                                <option value="{{ sem }}">{{ sem }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Select the semester for timetable generation.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="batch" class="form-label">Batch/Section *</label>
+                        <input type="text" class="form-control" id="batch" name="batch" required 
+                               placeholder="e.g., CS-A, Batch-2024, Section-B">
+                        <div class="form-text">Enter the batch or section identifier for students.</div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-magic me-2"></i>Generate Timetable
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Generation Info
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6 class="text-primary">How it works:</h6>
+                <ol class="small">
+                    <li>System analyzes available courses, faculty, and rooms</li>
+                    <li>AI algorithm assigns time slots avoiding conflicts</li>
+                    <li>Validates constraints and optimizes schedule</li>
+                    <li>Generates final conflict-free timetable</li>
+                </ol>
+                
+                <h6 class="text-primary mt-3">Constraints considered:</h6>
+                <ul class="small">
+                    <li><i class="fas fa-check text-success me-1"></i>No faculty double-booking</li>
+                    <li><i class="fas fa-check text-success me-1"></i>No room conflicts</li>
+                    <li><i class="fas fa-check text-success me-1"></i>Required hours per course</li>
+                    <li><i class="fas fa-check text-success me-1"></i>Room type matching (lab/classroom)</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Time Slots
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">Standard time slots (Monday to Friday):</p>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="small">
+                            <strong>Morning Sessions:</strong><br>
+                            09:00 - 09:50<br>
+                            09:50 - 10:35<br>
+                            <em>Break (10:35-10:50)</em><br>
+                            10:50 - 11:35<br>
+                            11:35 - 12:20<br>
+                            12:20 - 13:05
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="small">
+                            <strong>Afternoon Sessions:</strong><br>
+                            <em>Lunch (13:05-14:00)</em><br>
+                            14:00 - 14:45<br>
+                            14:45 - 15:30<br>
+                            <em>Break (15:30-15:45)</em><br>
+                            15:45 - 16:30
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prerequisites Check -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-clipboard-check me-2"></i>Prerequisites Check
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            {% if departments %}
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <h6>Courses Available</h6>
+                                <small class="text-muted">{{ departments|length }} departments</small>
+                            {% else %}
+                                <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                                <h6>No Courses</h6>
+                                <small class="text-muted">Add courses first</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            {% if semesters %}
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <h6>Semesters Ready</h6>
+                                <small class="text-muted">{{ semesters|length }} semesters</small>
+                            {% else %}
+                                <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                                <h6>No Semesters</h6>
+                                <small class="text-muted">Configure courses</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                            <h6>Faculty Ready</h6>
+                            <small class="text-muted">Check faculty page</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                            <h6>Rooms Ready</h6>
+                            <small class="text-muted">Check rooms page</small>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if not departments or not semesters %}
+                    <div class="alert alert-warning mt-3 mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Setup Required:</strong> Please add courses, faculty, and rooms before generating a timetable.
+                        <a href="{{ url_for('courses') }}" class="alert-link">Add courses</a> |
+                        <a href="{{ url_for('faculty') }}" class="alert-link">Add faculty</a> |
+                        <a href="{{ url_for('rooms') }}" class="alert-link">Add rooms</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
