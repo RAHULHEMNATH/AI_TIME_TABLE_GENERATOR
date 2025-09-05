@@ -6,7 +6,7 @@ app = Flask(__name__)
 def home():
     # Try to render your main homepage template
     # Replace 'index.html' with the name of your actual main template file
-    return render_template('main.py')
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
